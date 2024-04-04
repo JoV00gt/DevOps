@@ -1,10 +1,8 @@
 name: 'coverage myapp'
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-    
+    pull_request:
+        branches:
+            - main
 jobs:
     coverage:
         runs-on: ubuntu-latest
@@ -13,3 +11,5 @@ jobs:
             - uses: ArtiomTr/jest-coverage-report-action@v2
               with:
                   working-directory: ./myapp
+          
+
