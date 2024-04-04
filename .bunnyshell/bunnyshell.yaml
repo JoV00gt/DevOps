@@ -1,8 +1,46 @@
 kind: Environment
 name: preview
 type: primary
-urlHandle: jvanl
+urlHandle: jvav
 components:
+    -
+        kind: Database
+        name: db-exporter
+        dockerCompose:
+            environment:
+                MONGODB_URI: 'mongodb://josvoogt21:password@mongodb:27017'
+            image: 'bitnami/mongodb-exporter:latest'
+    -
+        kind: Application
+        name: grafana
+        gitRepo: 'https://github.com/JoV00gt/DevOps.git'
+        gitBranch: main
+        gitApplicationPath: grafana
+        dockerCompose:
+            build:
+                context: ./grafana
+                dockerfile: Dockerfile
+            ports:
+                - '3000:3000'
+        hosts:
+            -
+                hostname: 'grafana-{{ env.base_domain }}'
+                path: /
+                servicePort: 3000
+    -
+        kind: Service
+        name: messagebroker
+        dockerCompose:
+            image: 'rabbitmq:3-management'
+            ports:
+                - '5672:5672'
+                - '15672:15672'
+            restart: always
+        hosts:
+            -
+                hostname: 'messagebroker-{{ env.base_domain }}'
+                path: /
+                servicePort: 5672
     -
         kind: Database
         name: mongodb
@@ -17,7 +55,7 @@ components:
     -
         kind: Application
         name: myapp
-        gitRepo: 'https://github.com/JosVoogt2107/avans-devops-2324-jos.git'
+        gitRepo: 'https://github.com/JoV00gt/DevOps.git'
         gitBranch: main
         gitApplicationPath: myapp
         dockerCompose:
@@ -30,12 +68,64 @@ components:
                 - dev
             environment:
                 DB_NAME: myapp
+                MESSAGEBROKER: 'amqp://messagebroker:5672'
                 MONGO_URL: 'mongodb://josvoogt21:password@mongodb:27017'
-                PORT: '3000'
+                PORT: '5000'
             ports:
-                - '12345:3000'
+                - '12345:5000'
         hosts:
             -
                 hostname: 'myapp-{{ env.base_domain }}'
                 path: /
                 servicePort: 12345
+    -
+        kind: Application
+        name: mysecondapp
+        gitRepo: 'https://github.com/JoV00gt/DevOps.git'
+        gitBranch: main
+        gitApplicationPath: mysecondapp
+        dockerCompose:
+            build:
+                context: ./mysecondapp
+                dockerfile: Dockerfile
+            command:
+                - npm
+                - run
+                - dev
+            environment:
+                DB_NAME: mysecondapp
+                MESSAGEBROKER: 'amqp://messagebroker:5672'
+                MONGO_URL: 'mongodb://josvoogt21:password@mongodb:27017'
+                PORT: '5001'
+            ports:
+                - '12346:5001'
+        hosts:
+            -
+                hostname: 'mysecondapp-{{ env.base_domain }}'
+                path: /
+                servicePort: 12346
+    -
+        kind: Service
+        name: prometheus
+        dockerCompose:
+            command:
+                - '--web.enable-lifecycle'
+                - '--config.file=/etc/prometheus/prometheus.yml'
+            image: 'prom/prometheus:latest'
+            ports:
+                - '9090:9090'
+        hosts:
+            -
+                hostname: 'prometheus-{{ env.base_domain }}'
+                path: /
+                servicePort: 9090
+        volumes:
+            -
+                name: prometheus-data
+                mount: /prometheus
+                subPath: ''
+volumes:
+    -
+        name: prometheus-data
+        size: 1Gi
+        type: disk
