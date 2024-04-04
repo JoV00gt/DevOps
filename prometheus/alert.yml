@@ -1,0 +1,6 @@
+groups:
+  - name: Alerts
+    rules:
+      - alert: "On myapp down"
+        expr: up{job="myapp"} < 1
+        for: 30s

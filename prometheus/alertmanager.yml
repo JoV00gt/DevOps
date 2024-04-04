@@ -1,0 +1,61 @@
+global:
+  # Sendgrid SMTP properties.
+  smtp_smarthost: 'smtp.sendgrid.net:587'
+  smtp_from: 'j.voogt1@student.avans.nl'
+  smtp_auth_username: 'apikey'
+  smtp_auth_password: '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'
+
+  receivers:
+  - name: mail
+    email_configs:
+    - to: "j.voogt1@student.avans.nl"
+      headers:
+        Subject: "Alert ({{ .Status }}): {{ .CommonLabels.severity }} {{ .CommonAnnotations.message }} ({{ .CommonLabels.alertname }})"
+      html: |
+        Greetings,
+        <p>
+        You have the following firing alerts:
+        <ul>
+        {{ range .Alerts }}
+        <li>{{.Labels.alertname}} on {{.Labels.instance}}</li>
+        <li>Labels:</li>
+        <li>{{ range .Labels.SortedPairs }} - {{ .Name }} = {{ .Value }}</li>
+        <li>{{ end }}Annotations:</li>
+        <li>{{ range .Annotations.SortedPairs }} - {{ .Name }} = {{ .Value }}</li>
+        <li>{{ end }}---</li>
+        {{ end }}
+        </ul>
+        </p>
+
+    slack_configs:
+    - channel: '#alerting'
+      send_resolved: true
+      icon_url: https://avatars3.githubusercontent.com/u/3380462
+      title: "|-"
+       [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}
+       {{- if gt (len .CommonLabels) (len .GroupLabels) -}}
+         {{" "}}(
+         {{- with .CommonLabels.Remove .GroupLabels.Names }}
+           {{- range $index, $label := .SortedPairs -}}
+             {{ if $index }}, {{ end }}
+             {{- $label.Name }}="{{ $label.Value -}}"
+           {{- end }}
+         {{- end -}}
+         )
+       {{- end }}
+      text: >-
+       {{ range .Alerts -}}
+       *Alert:* {{ .Annotations.title }}{{ if .Labels.severity }} - `{{ .Labels.severity }}`{{ end }}
+
+       *Description:* {{ .Annotations.description }}
+
+       *Details:*
+         {{ range .Labels.SortedPairs }} • *{{ .Name }}:* `{{ .Value }}`
+         {{ end }}
+       {{ end }}
+
+  route:
+    group_wait: 10s
+    group_interval: 5m
+    receiver: mail
+    repeat_interval: 10s

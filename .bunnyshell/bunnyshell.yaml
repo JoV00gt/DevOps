@@ -1,0 +1,41 @@
+kind: Environment
+name: preview
+type: primary
+urlHandle: jvanl
+components:
+    -
+        kind: Database
+        name: mongodb
+        dockerCompose:
+            environment:
+                MONGO_INITDB_ROOT_PASSWORD: password
+                MONGO_INITDB_ROOT_USERNAME: josvoogt21
+            image: 'mongo:latest'
+            ports:
+                - '27017:27017'
+            restart: always
+    -
+        kind: Application
+        name: myapp
+        gitRepo: 'https://github.com/JosVoogt2107/avans-devops-2324-jos.git'
+        gitBranch: main
+        gitApplicationPath: myapp
+        dockerCompose:
+            build:
+                context: ./myapp
+                dockerfile: Dockerfile
+            command:
+                - npm
+                - run
+                - dev
+            environment:
+                DB_NAME: myapp
+                MONGO_URL: 'mongodb://josvoogt21:password@mongodb:27017'
+                PORT: '3000'
+            ports:
+                - '12345:3000'
+        hosts:
+            -
+                hostname: 'myapp-{{ env.base_domain }}'
+                path: /
+                servicePort: 12345
