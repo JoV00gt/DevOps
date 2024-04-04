@@ -3,7 +3,7 @@ global:
   smtp_smarthost: 'smtp.sendgrid.net:587'
   smtp_from: 'j.voogt1@student.avans.nl'
   smtp_auth_username: 'apikey'
-  smtp_auth_password: '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'
+  smtp_auth_password: '${{ secrets.SENDGRID_API_KEY }}'
 
   receivers:
   - name: mail
