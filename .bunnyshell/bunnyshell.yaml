@@ -4,30 +4,6 @@ type: primary
 urlHandle: jvav
 components:
     -
-        kind: Database
-        name: db-exporter
-        dockerCompose:
-            environment:
-                MONGODB_URI: 'mongodb://josvoogt21:password@mongodb:27017'
-            image: 'bitnami/mongodb-exporter:latest'
-    -
-        kind: Application
-        name: grafana
-        gitRepo: 'https://github.com/JoV00gt/DevOps.git'
-        gitBranch: main
-        gitApplicationPath: grafana
-        dockerCompose:
-            build:
-                context: ./grafana
-                dockerfile: Dockerfile
-            ports:
-                - '3000:3000'
-        hosts:
-            -
-                hostname: 'grafana-{{ env.base_domain }}'
-                path: /
-                servicePort: 3000
-    -
         kind: Service
         name: messagebroker
         dockerCompose:
@@ -104,28 +80,3 @@ components:
                 hostname: 'mysecondapp-{{ env.base_domain }}'
                 path: /
                 servicePort: 12346
-    -
-        kind: Service
-        name: prometheus
-        dockerCompose:
-            command:
-                - '--web.enable-lifecycle'
-                - '--config.file=/etc/prometheus/prometheus.yml'
-            image: 'prom/prometheus:latest'
-            ports:
-                - '9090:9090'
-        hosts:
-            -
-                hostname: 'prometheus-{{ env.base_domain }}'
-                path: /
-                servicePort: 9090
-        volumes:
-            -
-                name: prometheus-data
-                mount: /prometheus
-                subPath: ''
-volumes:
-    -
-        name: prometheus-data
-        size: 1Gi
-        type: disk
